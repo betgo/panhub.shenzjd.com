@@ -1,11 +1,8 @@
 <template>
-  <!-- 弹窗公告（接口化，对齐官方站 2026-09-21）：内容全部来自官方站后台「弹窗公告」，
-       组件内不再有任何写死的文案/图片。返回 enabled=false（后台关闭，或既没正文
-       也没图片）时不渲染任何东西。点「我知道了」/ 关闭 / 点遮罩后按版本记
-       LocalStorage，同一版本不再提示；后台改内容会让版本号 +1，用户重新看到一次 -->
+  <!-- 推广弹窗：内容来自 src/config/placeholders.ts（PROMO_POPUP），不再请求官方微信群接口 -->
   <Teleport to="body">
     <div v-if="visible" class="nm-mask" @click.self="dismiss">
-      <div class="nm-modal" role="dialog" aria-modal="true" :aria-label="title || '公告'">
+      <div class="nm-modal" role="dialog" aria-modal="true" :aria-label="title || 'xxx'">
         <button class="nm-close" type="button" aria-label="关闭" title="关闭" @click="dismiss">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -18,15 +15,15 @@
         <p v-if="text" class="nm-text">{{ text }}</p>
 
         <a
-          v-if="imageUrl && !imageFailed && link"
+          v-if="imageUrl && !imageFailed && link && link !== 'xxx'"
           class="nm-figure nm-figure--link"
           :href="link"
           target="_blank"
           rel="noopener">
-          <img :src="imageUrl" :alt="imageHint || title || '公告图片'" loading="lazy" @error="onImageError" />
+          <img :src="imageUrl" :alt="imageHint || title || 'xxx'" loading="lazy" @error="onImageError" />
         </a>
         <div v-else-if="imageUrl && !imageFailed" class="nm-figure">
-          <img :src="imageUrl" :alt="imageHint || title || '公告图片'" loading="lazy" @error="onImageError" />
+          <img :src="imageUrl" :alt="imageHint || title || 'xxx'" loading="lazy" @error="onImageError" />
         </div>
 
         <p v-if="imageHint && imageUrl && !imageFailed" class="nm-hint">{{ imageHint }}</p>
@@ -38,20 +35,10 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 弹窗公告（接口化）
- *
- * 全部字段来自 GET /api/notice-popup（官方站后台「弹窗公告」在线编辑）：
- *   { enabled, version, title, text, imageUrl, imageHint, link, buttonText }
- *
- * 已读语义：按版本号记 LocalStorage（panhub:notice-popup-dismissed:vN）。
- * 版本号由服务端在内容变化时 +1，所以"改内容 → 老用户重新看到一次"是自动的。
- */
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { apiGet } from "../api/client";
+import { PROMO_POPUP } from "../config/placeholders";
 
 const DISMISS_KEY_PREFIX = "panhub:notice-popup-dismissed:v";
-/** 稍作延迟，避免首屏打开时立刻被弹窗抢焦点 */
 const SHOW_DELAY_MS = 800;
 
 const title = ref("");
@@ -59,12 +46,10 @@ const text = ref("");
 const imageUrl = ref("");
 const imageHint = ref("");
 const link = ref("");
-const buttonText = ref("我知道了");
-/** 当前配置的版本号（关闭时用它写已读标记） */
+const buttonText = ref("xxx");
 const currentVersion = ref<number | null>(null);
 
 const visible = ref(false);
-/** 图片加载失败 → 隐藏图片区（连同说明文字），文字部分照常展示 */
 const imageFailed = ref(false);
 let showTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -72,22 +57,16 @@ function onImageError() {
   imageFailed.value = true;
 }
 
-onMounted(async () => {
-  let data: any = null;
-  try {
-    const res = await apiGet<{ code: number; data: any }>("/notice-popup");
-    if (res?.code === 0) data = res.data;
-  } catch {
-    return; // 接口异常：静默不弹，绝不影响页面
-  }
-  if (!data?.enabled) return;
+onMounted(() => {
+  const data = PROMO_POPUP;
+  if (!data.enabled) return;
 
-  title.value = data.title || "";
-  text.value = data.text || "";
+  title.value = data.title || "xxx";
+  text.value = data.text || "xxx";
   imageUrl.value = data.imageUrl || "";
   imageHint.value = data.imageHint || "";
-  link.value = data.link || "";
-  buttonText.value = data.buttonText || "我知道了";
+  link.value = data.link || "xxx";
+  buttonText.value = data.buttonText || "xxx";
   currentVersion.value = Number(data.version) || 0;
 
   try {
@@ -107,14 +86,12 @@ function dismiss() {
   visible.value = false;
   if (currentVersion.value === null) return;
   try {
-    // 只记当前版本：后台升版本后老用户会重新看到一次
     localStorage.setItem(`${DISMISS_KEY_PREFIX}${currentVersion.value}`, "1");
   } catch {}
 }
 </script>
 
 <style scoped>
-/* 遮罩：全屏居中，点空白也算「我知道了」 */
 .nm-mask {
   position: fixed;
   inset: 0;
@@ -178,7 +155,6 @@ function dismiss() {
   white-space: pre-line;
 }
 
-/* 图片区：图片内容由后台任意配置 */
 .nm-figure {
   display: inline-block;
   padding: 8px;
@@ -223,12 +199,8 @@ function dismiss() {
 }
 
 @keyframes nm-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes nm-pop {

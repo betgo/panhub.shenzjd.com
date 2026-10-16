@@ -8,11 +8,17 @@
     </div>
 
     <!--
-      顶部导航：外部 Web Component（站点导航 + 头像登录）。
-      登录态与本页共用同一个 wx-auth 单例，登录成功会同步到 isVerified，
-      因此搜索前的认证校验不会重复弹窗。
+      顶部品牌栏占位（原官方 site-navbar：神族九帝 / 流量卡广告 / 子站推广已去掉）。
+      文案与链接在 src/config/placeholders.ts，后续替换 BRAND_NAME / BRAND_URL 即可。
     -->
-    <site-navbar></site-navbar>
+    <header class="brand-bar">
+      <a
+        class="brand-bar__link"
+        :href="brandHref"
+        :target="brandHref.startsWith('http') ? '_blank' : undefined"
+        :rel="brandHref.startsWith('http') ? 'noopener' : undefined"
+      >{{ brandName }}</a>
+    </header>
 
     <!-- 公告条 -->
     <div v-if="announcementVisible" class="announce-bar" role="status">
@@ -203,7 +209,7 @@
 
     <!-- 「获取」等待/复制弹窗（含积分不足看广告、限流、回退等全部状态） -->
     <TransferStatusDialog />
-    <!-- 弹窗公告：内容来自官方站后台配置（/api/notice-popup），关闭时自动不弹 -->
+    <!-- 推广弹窗：占位见 src/config/placeholders.ts（PROMO_POPUP），默认关闭 -->
     <NoticeModal />
   </div>
 
@@ -223,6 +229,7 @@ import HotKeywordSection from "./components/HotKeywordSection.vue";
 import CuratedResourceSection from "./components/CuratedResourceSection.vue";
 import NoticeModal from "./components/NoticeModal.vue";
 import { API_BASE } from "./config";
+import { BRAND_NAME, BRAND_URL } from "./config/placeholders";
 import { useSearch } from "./composables/useSearch";
 import { useAnnouncement } from "./composables/useAnnouncement";
 import { useToast } from "./composables/useToast";
@@ -277,6 +284,9 @@ const emptySuggestions = computed(() => hotKeywords.value.slice(0, 5));
 // 站点 logo（与 index.html 的 favicon 同源）
 const LOGO_URL =
   "https://cdn.jsdmirror.com/gh/wu529778790/img.shenzjd.com@master/blog/imgx-20260828-151509-5bk7.svg";
+
+const brandName = BRAND_NAME;
+const brandHref = BRAND_URL === "xxx" || !BRAND_URL ? "#" : BRAND_URL;
 
 const announcementIndex = ref(0);
 let rotateTimer: ReturnType<typeof setInterval> | null = null;
@@ -539,6 +549,29 @@ onBeforeUnmount(() => {
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+}
+
+/* ===== 品牌占位栏（原 site-navbar） ===== */
+.brand-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--bg-primary, #fff) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+.brand-bar__link {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  text-decoration: none;
+}
+.brand-bar__link:hover {
+  color: var(--primary, #0f766e);
 }
 
 /* ===== 公告条 ===== */
