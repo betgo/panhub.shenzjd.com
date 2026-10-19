@@ -13,13 +13,14 @@
  * - code 1 + dead            → 确定性失效，禁用该条目（不二次转存）
  * - code 0 + limited 且无可用 share_url → 当日该盘型获取达上限（limited UX）
  * - code 0 + fallback / limited 带 share_url / 成功 share_url
- *     → 迅雷二次转存优先；转存失败再交付官方原链接
+ *     → 同盘二次转存优先（百度/夸克/迅雷）；转存失败再交付官方原链接
  * - 无 tid                   → 把 url 交给后端，由服务端统一交付原链接
  */
 import { computed, ref } from "vue";
 import { ApiError, apiPost } from "../api/client";
 import { getAnonTicketSafe } from "../api/auth";
 import { createAndWaitReshare, reshareEnabled } from "../api/reshare";
+import { isReshareableDriver } from "../config";
 import { buildShareText, driverOf } from "../utils/shareText";
 
 export type TransferStatus = "idle" | "loading" | "done" | "dead";
@@ -58,8 +59,8 @@ function rememberDelivery(key: string, data: any, url: string): void {
 
 
 /**
- * 迅雷二次转存优先，失败则交付官方原链接。
- * 用于：官方成功 / fallback（含日限兜底）/ limited 却仍带 share_url / 直链迅雷。
+ * 同盘二次转存优先（百度→百度、夸克→夸克、迅雷→迅雷），失败则交付官方原链接。
+ * 用于：官方成功 / fallback（含日限兜底）/ limited 却仍带 share_url / 直链分享。
  * @returns "reshared" | "origin"
  */
 async function deliverViaReshareOrOrigin(opts: {
@@ -83,26 +84,28 @@ async function deliverViaReshareOrOrigin(opts: {
     name: originName,
   };
 
-  if (reshareEnabled() && url && driverOf(url) === "xunlei") {
+  const sourceDriver = driverOf(url);
+  if (reshareEnabled() && url && isReshareableDriver(sourceDriver)) {
     try {
       const rr = await createAndWaitReshare({
         url,
         name: originName || undefined,
         tid: opts.tid,
         passcode: originPass || undefined,
-        driverHint: "xunlei",
+        driverHint: sourceDriver,
+        targetDriver: sourceDriver,
       });
       const mapped = {
         share_url: rr.share_url,
         passcode: rr.passcode || "",
         name: rr.name || opts.name || "",
-        driver: "xunlei",
+        driver: rr.driver || sourceDriver,
       };
       shareTextCache.value[opts.key] = buildShareText(mapped);
       rememberDelivery(opts.key, mapped, rr.share_url);
       return "reshared";
     } catch {
-      // 账号受限 / 转存失败：交付官方原链接，不当硬错误
+      // 账号受限 / 驱动未登录或禁用 / 转存失败：交付官方原链接，不当硬错误
     }
   }
 
@@ -264,13 +267,14 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
     };
 
     try {
-      // 直链已是迅雷分享且开启二次转存：跳过官方 /transfer，直接转存到你的号；
+      // 直链已是可转存盘（百度/夸克/迅雷）且开启二次转存：跳过官方 /transfer，同盘转存；
       // 转存失败则交付条目原链接（不当硬错误）
+      const directDriver = item.url ? driverOf(item.url) : null;
       if (
         reshareEnabled() &&
         item.url &&
         /^https?:\/\//i.test(item.url) &&
-        driverOf(item.url) === "xunlei" &&
+        isReshareableDriver(directDriver) &&
         !item.tid
       ) {
         const mode = await deliverViaReshareOrOrigin({
@@ -282,7 +286,7 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
             share_url: item.url,
             passcode: item.password || "",
             name: item.name || "",
-            driver: "xunlei",
+            driver: directDriver,
           },
         });
         statusMap.value[key] = "done";
@@ -414,7 +418,7 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
           return;
         }
 
-        // ④ 成功：官方链拿到后迅雷二次转存；失败则交付官方原链（不当硬错误）
+        // ④ 成功：官方链拿到后按源盘同盘二次转存；失败则交付官方原链（不当硬错误）
         if (resp.code === 0 && resp.data?.share_url) {
           const upstreamUrl = String(resp.data.share_url || "");
           const mode = await deliverViaReshareOrOrigin({
@@ -426,7 +430,11 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
             originData: resp.data,
           });
           shareText = shareTextCache.value[key] || buildShareText(resp.data);
-          if (mode === "origin" && reshareEnabled() && driverOf(upstreamUrl) === "xunlei") {
+          if (
+            mode === "origin" &&
+            reshareEnabled() &&
+            isReshareableDriver(driverOf(upstreamUrl))
+          ) {
             showToast("二次转存未成功，已为你准备官方链接");
           }
         }
