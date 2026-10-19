@@ -38,6 +38,8 @@ export async function createAndWaitReshare(input: {
   url: string;
   name?: string;
   tid?: string;
+  /** Extract code when URL has no ?pwd= (official /transfer returns bare share_url + passcode) */
+  passcode?: string;
   driverHint?: string;
   expireDays?: number;
   signal?: AbortSignal;
@@ -45,15 +47,23 @@ export async function createAndWaitReshare(input: {
   const root = base();
   if (!root) throw new Error("未配置二次转存服务地址（RESHARE_API_BASE）");
 
+  const pass = String(input.passcode || "").trim();
+  let url = String(input.url || "").trim();
+  // Also put pwd on the URL so older backends / caches still see it
+  if (pass && url && !/[?&](?:pwd|password)=/i.test(url)) {
+    url += (url.includes("?") ? "&" : "?") + `pwd=${encodeURIComponent(pass)}`;
+  }
+
   const createRes = await fetch(`${root}/api/v1/reshare`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
       upstream: {
-        url: input.url,
+        url,
         name: input.name,
         tid: input.tid,
         driver_hint: input.driverHint || RESHARE_TARGET_DRIVER,
+        ...(pass ? { passcode: pass } : {}),
       },
       target_driver: RESHARE_TARGET_DRIVER,
       options: { expire_days: input.expireDays ?? 7 },
