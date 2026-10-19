@@ -19,6 +19,7 @@
 import { computed, ref } from "vue";
 import { ApiError, apiPost } from "../api/client";
 import { getAnonTicketSafe } from "../api/auth";
+import { createAndWaitReshare, reshareEnabled } from "../api/reshare";
 import { buildShareText, driverOf } from "../utils/shareText";
 
 export type TransferStatus = "idle" | "loading" | "done" | "dead";
@@ -206,6 +207,41 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
     };
 
     try {
+      // 直链已是迅雷分享且开启二次转存：跳过官方 /transfer，直接转存到你的号
+      if (
+        reshareEnabled() &&
+        item.url &&
+        /^https?:\/\//i.test(item.url) &&
+        driverOf(item.url) === "xunlei" &&
+        !item.tid
+      ) {
+        try {
+          const rr = await createAndWaitReshare({
+            url: item.url,
+            name: item.name,
+            driverHint: "xunlei",
+          });
+          const mapped = {
+            share_url: rr.share_url,
+            passcode: rr.passcode || "",
+            name: rr.name || item.name || "",
+            driver: "xunlei",
+          };
+          shareTextCache.value[key] = buildShareText(mapped);
+          rememberDelivery(key, mapped, rr.share_url);
+          statusMap.value[key] = "done";
+          await ensureMinLoading(startedAt);
+          openTransferDialog(key, true);
+          return;
+        } catch (re) {
+          const msg = re instanceof Error ? re.message : String(re);
+          statusMap.value[key] = "idle";
+          await ensureMinLoading(startedAt);
+          failTransferDialog(`二次转存失败：${msg}`, "error");
+          return;
+        }
+      }
+
       // 一律走后端换链接：有 tid → 服务端按注册表换回原链接再转存；
       // 没有 tid（正版合规源 / 旧缓存数据）→ 把 url 一并交给服务端，
       // 由它统一交付原链接。前端没有任何本地旁路。
@@ -303,6 +339,33 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
         if (resp.code === 0 && resp.data?.share_url) {
           shareText = buildShareText(resp.data);
           rememberDelivery(key, resp.data, resp.data.share_url);
+
+          // ⑤ 二次转存（迅雷）：官方链拿到后，再转到你的账号并出新分享
+          const upstreamUrl = String(resp.data.share_url || "");
+          if (reshareEnabled() && driverOf(upstreamUrl) === "xunlei") {
+            try {
+              const rr = await createAndWaitReshare({
+                url: upstreamUrl,
+                name: item.name || resp.data.name,
+                tid: item.tid,
+                driverHint: "xunlei",
+              });
+              const mapped = {
+                share_url: rr.share_url,
+                passcode: rr.passcode || "",
+                name: rr.name || item.name || "",
+                driver: "xunlei",
+              };
+              shareText = buildShareText(mapped);
+              rememberDelivery(key, mapped, rr.share_url);
+            } catch (re) {
+              const msg = re instanceof Error ? re.message : String(re);
+              statusMap.value[key] = "idle";
+              await ensureMinLoading(startedAt);
+              failTransferDialog(`二次转存失败：${msg}`, "error");
+              return;
+            }
+          }
         }
       } catch (e) {
         // 401 已在上面的重试循环里处理（吊登录弹窗 + 自动重试），
