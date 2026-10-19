@@ -176,6 +176,8 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
     tid?: string;
     url: string;
     name?: string;
+    /** MergedLink.password / official transfer passcode */
+    password?: string;
   }): Promise<void> {
     const key = item.tid || item.url;
     if (!key) return;
@@ -219,6 +221,7 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
           const rr = await createAndWaitReshare({
             url: item.url,
             name: item.name,
+            passcode: item.password,
             driverHint: "xunlei",
           });
           const mapped = {
@@ -348,6 +351,7 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
                 url: upstreamUrl,
                 name: item.name || resp.data.name,
                 tid: item.tid,
+                passcode: resp.data.passcode || item.password,
                 driverHint: "xunlei",
               });
               const mapped = {
