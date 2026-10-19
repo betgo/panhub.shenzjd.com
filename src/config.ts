@@ -37,3 +37,29 @@ export const SITE_NAME = "PanHub";
 
 /** 每轮搜索的累计结果上限（与后端默认一致：达到后出现「继续」） */
 export const MAX_RESULTS_PER_ROUND = 90;
+
+
+/**
+ * 二次转存后端（你的账号转存再分享）
+ *
+ * 优先级：构建时 VITE_RESHARE_API_BASE → 运行时 localStorage.RESHARE_API_BASE → 空（关闭）
+ * GitHub Pages 是 https，必须填 https 公网地址，不能用 http://127.0.0.1（会被混合内容拦截）。
+ * 本地用 http 预览时可在控制台：localStorage.setItem("RESHARE_API_BASE","http://127.0.0.1:8787")
+ */
+function readReshareBase(): string {
+  const fromEnv = String(import.meta.env.VITE_RESHARE_API_BASE || "").trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (typeof localStorage !== "undefined") {
+    const fromLs = String(localStorage.getItem("RESHARE_API_BASE") || "").trim().replace(/\/$/, "");
+    if (fromLs) return fromLs;
+  }
+  return "";
+}
+
+export const RESHARE_API_BASE = readReshareBase();
+
+/** 是否启用二次转存（有 base 即开） */
+export const USE_RESHARE = Boolean(RESHARE_API_BASE);
+
+/** 二次转存目标盘（MVP 固定迅雷） */
+export const RESHARE_TARGET_DRIVER = "xunlei";
