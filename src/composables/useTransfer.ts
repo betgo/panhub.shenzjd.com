@@ -10,10 +10,10 @@
  * 因此只有调 /api/transfer 才能换回可用的分享链接。
  *
  * 响应分支（服务端 2026-09 起的完整协议，缺一不可）：
- * - code 1 + dead            → 确定性失效，禁用该条目
- * - code 0 + limited         → 当日该盘型获取达上限
- * - code 0 + fallback        → 未拿到新链接，中性原因 + 原链接仍可复制
- * - code 0 + share_url       → 成功
+ * - code 1 + dead            → 确定性失效，禁用该条目（不二次转存）
+ * - code 0 + limited 且无可用 share_url → 当日该盘型获取达上限（limited UX）
+ * - code 0 + fallback / limited 带 share_url / 成功 share_url
+ *     → 迅雷二次转存优先；转存失败再交付官方原链接
  * - 无 tid                   → 把 url 交给后端，由服务端统一交付原链接
  */
 import { computed, ref } from "vue";
@@ -54,6 +54,61 @@ function rememberDelivery(key: string, data: any, url: string): void {
     // 早期路径没有该字段时按链接域名兜底
     driver: String(data?.driver || driverOf(link) || ""),
   };
+}
+
+
+/**
+ * 迅雷二次转存优先，失败则交付官方原链接。
+ * 用于：官方成功 / fallback（含日限兜底）/ limited 却仍带 share_url / 直链迅雷。
+ * @returns "reshared" | "origin"
+ */
+async function deliverViaReshareOrOrigin(opts: {
+  key: string;
+  url: string;
+  passcode?: string;
+  name?: string;
+  tid?: string;
+  /** 原链接侧的交付字段（官方 data 或直链条目），失败回退时用 */
+  originData?: Record<string, unknown>;
+}): Promise<"reshared" | "origin"> {
+  const url = String(opts.url || "").trim();
+  const originPass = String(
+    opts.passcode ?? opts.originData?.passcode ?? "",
+  );
+  const originName = String(opts.name ?? opts.originData?.name ?? "");
+  const originData: Record<string, unknown> = {
+    ...(opts.originData || {}),
+    share_url: url,
+    passcode: originPass,
+    name: originName,
+  };
+
+  if (reshareEnabled() && url && driverOf(url) === "xunlei") {
+    try {
+      const rr = await createAndWaitReshare({
+        url,
+        name: originName || undefined,
+        tid: opts.tid,
+        passcode: originPass || undefined,
+        driverHint: "xunlei",
+      });
+      const mapped = {
+        share_url: rr.share_url,
+        passcode: rr.passcode || "",
+        name: rr.name || opts.name || "",
+        driver: "xunlei",
+      };
+      shareTextCache.value[opts.key] = buildShareText(mapped);
+      rememberDelivery(opts.key, mapped, rr.share_url);
+      return "reshared";
+    } catch {
+      // 账号受限 / 转存失败：交付官方原链接，不当硬错误
+    }
+  }
+
+  shareTextCache.value[opts.key] = buildShareText(originData);
+  rememberDelivery(opts.key, originData, url);
+  return "origin";
 }
 
 /** key → 失效原因（dead 后再点直接展示） */
@@ -209,7 +264,8 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
     };
 
     try {
-      // 直链已是迅雷分享且开启二次转存：跳过官方 /transfer，直接转存到你的号
+      // 直链已是迅雷分享且开启二次转存：跳过官方 /transfer，直接转存到你的号；
+      // 转存失败则交付条目原链接（不当硬错误）
       if (
         reshareEnabled() &&
         item.url &&
@@ -217,32 +273,26 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
         driverOf(item.url) === "xunlei" &&
         !item.tid
       ) {
-        try {
-          const rr = await createAndWaitReshare({
-            url: item.url,
-            name: item.name,
-            passcode: item.password,
-            driverHint: "xunlei",
-          });
-          const mapped = {
-            share_url: rr.share_url,
-            passcode: rr.passcode || "",
-            name: rr.name || item.name || "",
+        const mode = await deliverViaReshareOrOrigin({
+          key,
+          url: item.url,
+          passcode: item.password,
+          name: item.name,
+          originData: {
+            share_url: item.url,
+            passcode: item.password || "",
+            name: item.name || "",
             driver: "xunlei",
-          };
-          shareTextCache.value[key] = buildShareText(mapped);
-          rememberDelivery(key, mapped, rr.share_url);
-          statusMap.value[key] = "done";
-          await ensureMinLoading(startedAt);
-          openTransferDialog(key, true);
-          return;
-        } catch (re) {
-          const msg = re instanceof Error ? re.message : String(re);
-          statusMap.value[key] = "idle";
-          await ensureMinLoading(startedAt);
-          failTransferDialog(`二次转存失败：${msg}`, "error");
-          return;
+          },
+        });
+        statusMap.value[key] = "done";
+        await ensureMinLoading(startedAt);
+        if (mode === "origin") {
+          // 软提示：主交付仍是原链接 ready 态
+          showToast("二次转存未成功，已为你准备原始链接");
         }
+        openTransferDialog(key, true);
+        return;
       }
 
       // 一律走后端换链接：有 tid → 服务端按注册表换回原链接再转存；
@@ -305,70 +355,79 @@ export function useTransfer(onAuthRequired?: () => Promise<boolean> | boolean) {
           return;
         }
 
-        // ② 每日限流（按盘型）：当天只停该盘型，提示换网盘或明天再来。
-        //    不缓存失败提示（次日重试就有意义，与 dead 不同）
+        // ② 每日限流（按盘型）：无可用 share_url 时保持 limited UX；
+        //    若意外仍带 share_url，则与 fallback 一样：先二次转存，失败再交原链
         if (resp.code === 0 && resp.data?.limited) {
           const msg =
             typeof resp.data.message === "string" && resp.data.message
               ? resp.data.message
               : "你今天获取这个网盘的次数已经很多了，换个网盘试试或者明天再来吧。";
+          const origin = String(resp.data.share_url || item.url || "").trim();
+          if (origin && /^https?:\/\//i.test(origin)) {
+            const mode = await deliverViaReshareOrOrigin({
+              key,
+              url: origin,
+              passcode: resp.data.passcode || item.password,
+              name: item.name || resp.data.name,
+              tid: item.tid,
+              originData: { ...resp.data, share_url: origin },
+            });
+            shareText = shareTextCache.value[key] || buildShareText({ ...resp.data, share_url: origin });
+            statusMap.value[key] = "done";
+            await ensureMinLoading(startedAt);
+            if (mode === "origin") showToast(msg || "二次转存未成功，已为你准备原始链接");
+            openTransferDialog(key, true);
+            return;
+          }
           statusMap.value[key] = "idle";
           failTransferDialog(msg, "limited");
           return;
         }
 
-        // ③ 未获取到新链接（风控/容量等）：中性原因 + 保留原链接复制入口；
-        //    状态回 idle，稍后可重试
+        // ③ 未获取到新链接（风控/日限等兜底）：仍先二次转存官方原链；
+        //    转存失败再交付原链接（ready），不当硬错误
         if (resp.code === 0 && resp.data?.fallback) {
           const msg =
             typeof resp.data.message === "string" && resp.data.message
               ? resp.data.message
               : "未能获取到新链接，已为你准备原始链接";
-          const origin = resp.data.share_url || item.url;
-          if (origin) {
-            // 兜底也是交付（2026-09-21 用户反馈）：复制给用户的必须是**口令文本**，
-            // 裸 URL 粘进各盘 APP 没反应（APP 靠剪贴板识别口令）——同时留一份结构化
-            // 数据，桌面端 fallback 也照常出资源二维码
-            shareTextCache.value[key] = buildShareText({ ...resp.data, share_url: origin });
-            rememberDelivery(key, resp.data, origin);
+          const origin = String(resp.data.share_url || item.url || "").trim();
+          if (origin && /^https?:\/\//i.test(origin)) {
+            const mode = await deliverViaReshareOrOrigin({
+              key,
+              url: origin,
+              passcode: resp.data.passcode || item.password,
+              name: item.name || resp.data.name,
+              tid: item.tid,
+              originData: { ...resp.data, share_url: origin },
+            });
+            shareText = shareTextCache.value[key] || buildShareText({ ...resp.data, share_url: origin });
+            statusMap.value[key] = "done";
+            await ensureMinLoading(startedAt);
+            if (mode === "origin") showToast(msg);
+            openTransferDialog(key, true);
+            return;
           }
           statusMap.value[key] = "idle";
           await ensureMinLoading(startedAt);
-          failTransferDialog(msg, origin ? "fallback" : "error");
+          failTransferDialog(msg, "error");
           return;
         }
 
-        // ④ 成功：拼官方口令 + 结构化字段单独留一份给二维码
+        // ④ 成功：官方链拿到后迅雷二次转存；失败则交付官方原链（不当硬错误）
         if (resp.code === 0 && resp.data?.share_url) {
-          shareText = buildShareText(resp.data);
-          rememberDelivery(key, resp.data, resp.data.share_url);
-
-          // ⑤ 二次转存（迅雷）：官方链拿到后，再转到你的账号并出新分享
           const upstreamUrl = String(resp.data.share_url || "");
-          if (reshareEnabled() && driverOf(upstreamUrl) === "xunlei") {
-            try {
-              const rr = await createAndWaitReshare({
-                url: upstreamUrl,
-                name: item.name || resp.data.name,
-                tid: item.tid,
-                passcode: resp.data.passcode || item.password,
-                driverHint: "xunlei",
-              });
-              const mapped = {
-                share_url: rr.share_url,
-                passcode: rr.passcode || "",
-                name: rr.name || item.name || "",
-                driver: "xunlei",
-              };
-              shareText = buildShareText(mapped);
-              rememberDelivery(key, mapped, rr.share_url);
-            } catch (re) {
-              const msg = re instanceof Error ? re.message : String(re);
-              statusMap.value[key] = "idle";
-              await ensureMinLoading(startedAt);
-              failTransferDialog(`二次转存失败：${msg}`, "error");
-              return;
-            }
+          const mode = await deliverViaReshareOrOrigin({
+            key,
+            url: upstreamUrl,
+            passcode: resp.data.passcode || item.password,
+            name: item.name || resp.data.name,
+            tid: item.tid,
+            originData: resp.data,
+          });
+          shareText = shareTextCache.value[key] || buildShareText(resp.data);
+          if (mode === "origin" && reshareEnabled() && driverOf(upstreamUrl) === "xunlei") {
+            showToast("二次转存未成功，已为你准备官方链接");
           }
         }
       } catch (e) {
