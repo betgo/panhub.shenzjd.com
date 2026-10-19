@@ -1,7 +1,11 @@
 /**
  * 二次转存客户端：POST 创建任务 + 轮询直到 done/failed
  */
-import { RESHARE_API_BASE, RESHARE_TARGET_DRIVER } from "../config";
+import {
+  RESHARE_API_BASE,
+  RESHARE_TARGET_DRIVER,
+  resolveReshareTargetDriver,
+} from "../config";
 
 export type ReshareResult = {
   driver: string;
@@ -40,7 +44,10 @@ export async function createAndWaitReshare(input: {
   tid?: string;
   /** Extract code when URL has no ?pwd= (official /transfer returns bare share_url + passcode) */
   passcode?: string;
+  /** 源盘提示；未传则按 url 域名推断 */
   driverHint?: string;
+  /** 目标盘；未传则与源盘同盘（百度→百度、夸克→夸克、迅雷→迅雷），未知则兜底迅雷 */
+  targetDriver?: string;
   expireDays?: number;
   signal?: AbortSignal;
 }): Promise<ReshareResult> {
@@ -54,6 +61,14 @@ export async function createAndWaitReshare(input: {
     url += (url.includes("?") ? "&" : "?") + `pwd=${encodeURIComponent(pass)}`;
   }
 
+  const inferred = resolveReshareTargetDriver(input.driverHint || url);
+  const targetDriver = String(input.targetDriver || inferred || RESHARE_TARGET_DRIVER)
+    .trim()
+    .toLowerCase();
+  const driverHint = String(input.driverHint || inferred || targetDriver)
+    .trim()
+    .toLowerCase();
+
   const createRes = await fetch(`${root}/api/v1/reshare`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -62,10 +77,10 @@ export async function createAndWaitReshare(input: {
         url,
         name: input.name,
         tid: input.tid,
-        driver_hint: input.driverHint || RESHARE_TARGET_DRIVER,
+        driver_hint: driverHint,
         ...(pass ? { passcode: pass } : {}),
       },
-      target_driver: RESHARE_TARGET_DRIVER,
+      target_driver: targetDriver,
       options: { expire_days: input.expireDays ?? 7 },
     }),
     signal: input.signal,
