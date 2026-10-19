@@ -42,10 +42,13 @@ export const MAX_RESULTS_PER_ROUND = 90;
 /**
  * 二次转存后端（你的账号转存再分享）
  *
- * 优先级：构建时 VITE_RESHARE_API_BASE → 运行时 localStorage.RESHARE_API_BASE → 空（关闭）
+ * 优先级：构建时 VITE_RESHARE_API_BASE → 运行时 localStorage.RESHARE_API_BASE → 默认 Vercel 正式地址
  * GitHub Pages 是 https，必须填 https 公网地址，不能用 http://127.0.0.1（会被混合内容拦截）。
  * 本地用 http 预览时可在控制台：localStorage.setItem("RESHARE_API_BASE","http://127.0.0.1:8787")
  */
+/** 正式二次转存 API（Vercel production） */
+const DEFAULT_RESHARE_API_BASE = "https://panhub-reshare.vercel.app";
+
 function readReshareBase(): string {
   const fromEnv = String(import.meta.env.VITE_RESHARE_API_BASE || "").trim().replace(/\/$/, "");
   if (fromEnv) return fromEnv;
@@ -53,7 +56,7 @@ function readReshareBase(): string {
     const fromLs = String(localStorage.getItem("RESHARE_API_BASE") || "").trim().replace(/\/$/, "");
     if (fromLs) return fromLs;
   }
-  return "";
+  return DEFAULT_RESHARE_API_BASE;
 }
 
 export const RESHARE_API_BASE = readReshareBase();
