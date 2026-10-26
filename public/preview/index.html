@@ -23,7 +23,7 @@
           </div>
 
           <form class="search-wrap" id="home-search-form" autocomplete="off">
-            <div class="search-box">
+            <div class="search-box search-box--home">
               <span class="search-box__icon" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
@@ -62,46 +62,89 @@
 
     <!-- ========== RESULTS ========== -->
     <div class="view" id="view-results" data-view="results">
-      <div class="results-top">
-        <button type="button" class="results-top__logo" id="back-home" title="返回首页">
-          <img src="./logo.svg" width="36" height="36" alt="" />
-          <span>星盘搜</span>
-        </button>
-        <form class="search-wrap" id="results-search-form" autocomplete="off">
-          <div class="search-box">
-            <span class="search-box__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-              </svg>
-            </span>
+      <div class="results-page">
+        <p class="hero-tagline">
+          <span>10000000+ 网盘资源免费无偿分享</span><span class="hero-tagline__sep" aria-hidden="true">·</span><span class="hero-tagline__platforms">聚合夸克、百度、迅雷、UC、移动等网盘，</span><span>坚持做最全的网盘搜索引擎</span>
+        </p>
+
+        <div class="results-brand-row">
+          <button type="button" class="results-brand" id="back-home" title="返回首页">
+            <img src="./logo.svg" width="40" height="40" alt="" />
+            <span>星盘搜</span>
+          </button>
+        </div>
+
+        <form class="live-search" id="results-search-form" autocomplete="off">
+          <div class="live-search-box" id="results-search-box">
+            <div class="cat-select-wrap" id="cat-wrap">
+              <button type="button" class="cat-trigger" id="cat-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span id="cat-label">全部网盘</span>
+                <svg class="cat-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </button>
+              <div class="cat-menu" id="cat-menu" hidden role="listbox"></div>
+            </div>
+            <div class="cat-divider" aria-hidden="true"></div>
             <input
-              class="search-box__input"
+              class="live-search-input"
               id="results-kw"
               name="kw"
               type="search"
-              placeholder="搜索网盘资源…"
+              placeholder="搜索网盘资源，支持百度云、阿里云盘、夸克网盘、115网盘、迅雷云盘、天翼云盘、123网盘、移动云盘、UC网盘等"
               aria-label="搜索关键词"
             />
-            <button type="button" class="search-box__clear" id="results-clear" aria-label="清空" title="清空">✕</button>
-            <button type="submit" class="search-box__btn">搜索</button>
+            <div class="live-search-actions">
+              <button type="button" class="action-btn reset" id="btn-reset" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
+                </svg>
+                <span class="btn-text">重置</span>
+              </button>
+              <button type="button" class="action-btn resume" id="btn-continue" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 3l14 9-14 9V3z"></path>
+                </svg>
+                <span class="btn-text">继续</span>
+              </button>
+              <button type="submit" class="action-btn primary" id="btn-search">
+                <span class="btn-text">搜索</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
           </div>
         </form>
-      </div>
 
-      <div class="results-main">
         <div class="stats-bar" id="stats-bar" hidden>
-          <span>找到约 <strong id="stat-total">0</strong> 条结果</span>
-          <span>用时 <strong id="stat-time">0.3</strong>s</span>
+          <div class="stats-main">
+            <span class="stat-item">
+              <span class="stat-label">结果</span>
+              <span class="stat-value" id="stat-total">0</span>
+            </span>
+            <span class="stat-item">
+              <span class="stat-label">用时</span>
+              <span class="stat-value" id="stat-time">0s</span>
+            </span>
+            <span class="paused-indicator-bar" id="status-pill">
+              <span>⏸</span>
+              <span class="paused-text" id="status-text">已找到 0 条结果，可继续搜索更多</span>
+            </span>
+          </div>
+          <div class="platform-filters" id="filters"></div>
         </div>
-
-        <div class="filters" id="filters" hidden></div>
 
         <div class="loading" id="loading" hidden>正在搜索…</div>
         <div class="empty" id="empty" hidden>
           <h3>未找到相关资源</h3>
           <p>试试其他关键词，或返回首页换个热词</p>
         </div>
-        <ul class="result-list" id="result-list"></ul>
+
+        <section class="results-section" id="results-section" hidden>
+          <div class="results-grid" id="results-grid"></div>
+        </section>
       </div>
 
       <footer class="site-footer">
