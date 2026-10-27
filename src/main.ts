@@ -10,4 +10,4 @@ initAuth();
 
 createApp(App).mount("#app");
 
-console.info(`[PanHub] 静态版已启动，接口地址：${API_BASE}`);
+console.info(`[星盘搜] 静态版已启动，接口地址：${API_BASE}`);

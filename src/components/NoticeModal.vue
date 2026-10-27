@@ -187,7 +187,7 @@ function dismiss() {
   padding: 10px 0;
   border: none;
   border-radius: var(--radius-md, 10px);
-  background: var(--primary, #0f766e);
+  background: var(--primary, #1A73E8);
   color: #fff;
   font-size: 14px;
   font-weight: 600;

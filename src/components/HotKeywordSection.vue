@@ -93,9 +93,9 @@ onMounted(ensureLoaded);
 .keyword-chip:hover {
   color: var(--primary);
   background: var(--bg-active);
-  border-color: rgba(15, 118, 110, 0.3);
+  border-color: rgba(26, 115, 232, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.12);
+  box-shadow: 0 4px 10px rgba(26, 115, 232, 0.12);
 }
 
 .keyword-chip:active {

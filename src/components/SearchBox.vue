@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--border-medium);
-  border-radius: 18px;
+  border-radius: 24px;
   box-shadow: var(--shadow-lg);
   transition: border-color var(--transition-normal), box-shadow var(--transition-normal),
     transform var(--transition-normal);
@@ -232,7 +232,7 @@ onBeforeUnmount(() => {
 
 .search-box.focused {
   border-color: var(--primary);
-  box-shadow: 0 10px 26px rgba(15, 118, 110, 0.14);
+  box-shadow: 0 10px 26px rgba(26, 115, 232, 0.14);
   transform: translateY(-2px);
 }
 
@@ -244,10 +244,10 @@ onBeforeUnmount(() => {
 @keyframes searchPulse {
   0%,
   100% {
-    box-shadow: 0 8px 32px rgba(15, 118, 110, 0.22);
+    box-shadow: 0 8px 32px rgba(26, 115, 232, 0.22);
   }
   50% {
-    box-shadow: 0 8px 40px rgba(15, 118, 110, 0.34);
+    box-shadow: 0 8px 40px rgba(26, 115, 232, 0.34);
   }
 }
 
@@ -261,7 +261,7 @@ onBeforeUnmount(() => {
   margin: calc(-1 * var(--sb-pad-y)) calc(-1 * var(--sb-gap)) calc(-1 * var(--sb-pad-y))
     calc(-1 * var(--sb-pad-x));
   padding: var(--sb-pad-y) var(--sb-pad-x);
-  border-radius: 17px 0 0 17px;
+  border-radius: 23px 0 0 23px;
   cursor: pointer;
   transition: background-color var(--transition-fast);
 }
@@ -406,13 +406,13 @@ onBeforeUnmount(() => {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, var(--primary), #14b8a6);
+  background: linear-gradient(135deg, var(--primary), #4a9af5);
   color: white;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
 }
 .action-btn.primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.36);
+  box-shadow: 0 8px 18px rgba(26, 115, 232, 0.36);
 }
 
 .action-btn.ghost {

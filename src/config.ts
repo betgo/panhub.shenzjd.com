@@ -33,7 +33,7 @@ export const WX_AUTH_SDK_URLS: readonly string[] = [
 /** 主源（旧配置名保留：app 内动态补插兜底仍先试主源） */
 export const WX_AUTH_SDK_URL = WX_AUTH_SDK_URLS[0];
 
-export const SITE_NAME = "PanHub";
+export const SITE_NAME = "星盘搜";
 
 /** 每轮搜索的累计结果上限（与后端默认一致：达到后出现「继续」） */
 export const MAX_RESULTS_PER_ROUND = 90;

@@ -448,13 +448,13 @@ function formatDate(d?: string) {
   cursor: pointer;
   white-space: nowrap;
   color: var(--primary);
-  border: 1px solid rgba(15, 118, 110, 0.35);
-  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(26, 115, 232, 0.35);
+  background: rgba(26, 115, 232, 0.06);
   transition: background-color var(--transition-fast), border-color var(--transition-fast),
     color var(--transition-fast), transform var(--transition-fast);
 }
 .transfer-btn:hover:not(:disabled) {
-  background: rgba(15, 118, 110, 0.12);
+  background: rgba(26, 115, 232, 0.12);
   border-color: var(--primary);
   transform: translateY(-1px);
 }
@@ -497,7 +497,7 @@ function formatDate(d?: string) {
 .transfer-btn--suspect:hover:not(:disabled) {
   color: var(--primary);
   border-color: var(--primary);
-  background: rgba(15, 118, 110, 0.1);
+  background: rgba(26, 115, 232, 0.1);
 }
 
 .spin {
@@ -520,19 +520,19 @@ function formatDate(d?: string) {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, var(--primary), #14b8a6);
+  background: linear-gradient(135deg, var(--primary), #4a9af5);
   color: white;
   border: none;
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 .load-more-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.4);
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.4);
 }
 .load-more-btn svg {
   stroke: currentColor;

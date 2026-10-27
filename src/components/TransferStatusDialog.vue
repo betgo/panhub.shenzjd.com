@@ -322,7 +322,7 @@ onBeforeUnmount(() => {
   line-height: 1.3;
 }
 .tsd-title svg {
-  color: var(--primary, #0f766e);
+  color: var(--primary, #1A73E8);
   flex-shrink: 0;
 }
 
@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
 
 /* 转圈 */
 .tsd-spin {
-  color: var(--primary, #0f766e);
+  color: var(--primary, #1A73E8);
   animation: tsd-spin 0.8s linear infinite;
 }
 @keyframes tsd-spin {
@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
 .tsd-meta-link {
   flex: 1;
   min-width: 0;
-  color: var(--primary, #0f766e);
+  color: var(--primary, #1A73E8);
   word-break: break-all;
 }
 /* 手机端地址是真外链（点了就跳），桌面端只是文本 */
@@ -473,7 +473,7 @@ a.tsd-meta-link:hover {
 .tsd-meta-code {
   flex: 1;
   min-width: 0;
-  color: var(--primary, #0f766e);
+  color: var(--primary, #1A73E8);
   font-weight: 700;
   letter-spacing: 1px;
 }
@@ -491,7 +491,7 @@ a.tsd-meta-link:hover {
   transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 .tsd-meta-copy:hover {
-  color: var(--primary, #0f766e);
+  color: var(--primary, #1A73E8);
 }
 
 /* 全屏放大：PC 上用户拿手机扫屏幕，码越大越好识别 */

@@ -23,7 +23,7 @@ export const PLATFORM_INFO: Record<string, PlatformInfo> = {
   },
   wikisource: {
     name: "维基文库",
-    color: "#0f766e",
+    color: "#1A73E8",
     icon: "./icons/wikisource.svg",
   },
   // 正版源矩阵（合规源不挂 tid、不剥离直链，条目直指在线阅读/下载）

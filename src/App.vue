@@ -7,19 +7,6 @@
       <div class="blob blob-3"></div>
     </div>
 
-    <!--
-      顶部品牌栏占位（原官方 site-navbar：神族九帝 / 流量卡广告 / 子站推广已去掉）。
-      文案与链接在 src/config/placeholders.ts，后续替换 BRAND_NAME / BRAND_URL 即可。
-    -->
-    <header class="brand-bar">
-      <a
-        class="brand-bar__link"
-        :href="brandHref"
-        :target="brandHref.startsWith('http') ? '_blank' : undefined"
-        :rel="brandHref.startsWith('http') ? 'noopener' : undefined"
-      >{{ brandName }}</a>
-    </header>
-
     <!-- 公告条 -->
     <div v-if="announcementVisible" class="announce-bar" role="status">
       <span class="announce-bar__icon" aria-hidden="true">📢</span>
@@ -46,20 +33,22 @@
       <!-- 品牌区（对齐官方站 2026-09-22 三改）：居中一行「logo + 站名」，
            下面一句描述，无卡片、无渐变底。搜索站的首屏只需要回答"这是谁、干什么"，
            剩下的交给下面的搜索框 -->
-      <header class="hero">
-        <div class="hero-lockup">
+      <!-- 首页：搜引擎极简大白底（logo + 星盘搜 + 搜索）；搜后收成紧凑品牌行 -->
+      <header class="hero" :class="{ 'hero--home': !searched, 'hero--compact': searched }">
+        <div class="hero-lockup" :class="{ 'hero-lockup--stack': !searched }">
           <img
             class="hero-logo"
             :src="LOGO_URL"
             alt=""
-            width="48"
-            height="48"
+            :width="searched ? 40 : 72"
+            :height="searched ? 40 : 72"
             aria-hidden="true" />
-          <h1 class="hero-brand">PanHub 网盘搜索</h1>
+          <h1 class="hero-brand">星盘搜</h1>
         </div>
+        <p v-if="!searched" class="hero-tag">聚合网盘资源搜索 · 不存储任何文件</p>
         <!-- 注意 span 之间不能换行：Vue 会吃掉元素之间仅含空白的换行文本节点，
              分隔符会跟前后文字黏在一起；间距一律由 .hero-tagline__sep 的 margin 给 -->
-        <p class="hero-tagline"><span>10000000+ 网盘资源免费无偿分享</span><span class="hero-tagline__sep" aria-hidden="true">·</span><span class="hero-tagline__platforms">聚合夸克、百度、迅雷、UC、移动等网盘，</span><span>坚持做最全的网盘搜索引擎</span></p>
+        <p v-else class="hero-tagline"><span>10000000+ 网盘资源免费无偿分享</span><span class="hero-tagline__sep" aria-hidden="true">·</span><span class="hero-tagline__platforms">聚合夸克、百度、迅雷、UC、移动等网盘，</span><span>坚持做最全的网盘搜索引擎</span></p>
       </header>
 
       <SearchBox
@@ -204,7 +193,7 @@
     </main>
 
     <footer class="site-footer">
-      <span class="footer-copy">PanHub · 聚合搜索，不存储任何文件</span>
+      <span class="footer-copy">星盘搜 · 聚合搜索，不存储任何文件</span>
     </footer>
 
     <!-- 「获取」等待/复制弹窗（含积分不足看广告、限流、回退等全部状态） -->
@@ -229,7 +218,6 @@ import HotKeywordSection from "./components/HotKeywordSection.vue";
 import CuratedResourceSection from "./components/CuratedResourceSection.vue";
 import NoticeModal from "./components/NoticeModal.vue";
 import { API_BASE } from "./config";
-import { BRAND_NAME, BRAND_URL } from "./config/placeholders";
 import { useSearch } from "./composables/useSearch";
 import { useAnnouncement } from "./composables/useAnnouncement";
 import { useToast } from "./composables/useToast";
@@ -281,12 +269,8 @@ const { keywords: hotKeywords, ensureLoaded: ensureHotKeywords } = useHotKeyword
 // 空状态推荐词：取词表前 5 个（官方站 2026-09-23 口径，替代已下线的热搜统计）
 const emptySuggestions = computed(() => hotKeywords.value.slice(0, 5));
 
-// 站点 logo（与 index.html 的 favicon 同源）
-const LOGO_URL =
-  "https://cdn.jsdmirror.com/gh/wu529778790/img.shenzjd.com@master/blog/imgx-20260828-151509-5bk7.svg";
-
-const brandName = BRAND_NAME;
-const brandHref = BRAND_URL === "xxx" || !BRAND_URL ? "#" : BRAND_URL;
+// 站点 logo（与 public/logo.svg / favicon 同源，C 版圆角方标）
+const LOGO_URL = "./logo.svg";
 
 const announcementIndex = ref(0);
 let rotateTimer: ReturnType<typeof setInterval> | null = null;
@@ -512,30 +496,30 @@ onBeforeUnmount(() => {
 .blob {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.28;
+  opacity: 0.14;
   animation: blobFloat 8s ease-in-out infinite;
 }
 .blob-1 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle at 40% 40%, #14b8a6 0%, #0f766e 45%, transparent 72%);
-  top: -100px;
-  left: -100px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle at 40% 40%, #8ab4f8 0%, #1A73E8 40%, transparent 72%);
+  top: -140px;
+  left: -120px;
 }
 .blob-2 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle at 40% 40%, #fb7185 0%, #f59e0b 45%, transparent 72%);
-  bottom: -50px;
-  right: -50px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle at 40% 40%, #c4b5fd 0%, #7C3AED 42%, transparent 72%);
+  bottom: -60px;
+  right: -40px;
   animation-delay: 2s;
 }
 .blob-3 {
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle at 40% 40%, #14b8a6 0%, #0ea5e9 45%, transparent 72%);
-  top: 50%;
-  left: 70%;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle at 40% 40%, #93c5fd 0%, #4a9af5 42%, transparent 72%);
+  top: 48%;
+  left: 72%;
   animation-delay: 4s;
 }
 @keyframes blobFloat {
@@ -551,29 +535,6 @@ onBeforeUnmount(() => {
   }
 }
 
-/* ===== 品牌占位栏（原 site-navbar） ===== */
-.brand-bar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 16px;
-  background: color-mix(in srgb, var(--bg-primary, #fff) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border-light, #e5e7eb);
-}
-.brand-bar__link {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary, #111827);
-  text-decoration: none;
-}
-.brand-bar__link:hover {
-  color: var(--primary, #0f766e);
-}
-
 /* ===== 公告条 ===== */
 .announce-bar {
   display: flex;
@@ -583,8 +544,8 @@ onBeforeUnmount(() => {
   width: 100%;
   margin-top: 12px;
   padding: 7px 16px;
-  background: linear-gradient(90deg, rgba(15, 118, 110, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
-  border-bottom: 1px solid rgba(15, 118, 110, 0.12);
+  background: linear-gradient(90deg, rgba(26, 115, 232, 0.08) 0%, rgba(124, 58, 237, 0.06) 100%);
+  border-bottom: 1px solid rgba(26, 115, 232, 0.12);
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -654,8 +615,7 @@ onBeforeUnmount(() => {
   gap: 24px;
 }
 
-/* ===== 品牌区（对齐官方站）：居中、无卡片无底色。一行「logo + 站名」48px 高，
-   下面一句描述；不加渐变底/阴影/圆角——越干净越像搜索站的首屏 ===== */
+/* ===== 品牌区：首页搜引擎极简（大标居中）；结果页紧凑品牌行 ===== */
 .hero {
   display: flex;
   flex-direction: column;
@@ -664,15 +624,26 @@ onBeforeUnmount(() => {
   padding: 6px 0 0;
   text-align: center;
 }
+.hero--home {
+  padding-top: min(18vh, 148px);
+  padding-bottom: 8px;
+  gap: 12px;
+}
+.hero--compact {
+  padding: 4px 0 0;
+  gap: 6px;
+}
 
 .hero-lockup {
   display: flex;
   align-items: center;
   gap: 14px;
 }
+.hero-lockup--stack {
+  flex-direction: column;
+  gap: 12px;
+}
 
-/* 不写死 border-radius / object-fit:fill：logo 是 512 方形 SVG（自带圆角），
-   一律等比缩放，绝不被容器拉扁 */
 .hero-logo {
   display: block;
   flex: none;
@@ -681,26 +652,46 @@ onBeforeUnmount(() => {
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
+.hero--home .hero-logo {
+  width: 72px;
+  height: 72px;
+}
+.hero--compact .hero-logo {
+  width: 40px;
+  height: 40px;
+}
 
 .hero-brand {
   margin: 0;
   font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.15;
   color: var(--text-primary);
+}
+.hero--home .hero-brand {
+  font-size: 32px;
+  font-weight: 600;
+}
+.hero--compact .hero-brand {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.hero-tag {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
 }
 
 .hero-tagline {
   margin: 0;
-  /* 860px：整句约 57 字，宽屏一行放得下；窄屏自然折成两行（居中，不显突兀） */
   max-width: 860px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
 }
 
-/* 分隔符间距由 margin 给（模板里 span 之间不留换行，见模板块注释） */
 .hero-tagline__sep {
   margin: 0 6px;
   opacity: 0.65;
@@ -746,9 +737,9 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: rgba(15, 118, 110, 0.1);
+  background: rgba(26, 115, 232, 0.1);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(15, 118, 110, 0.2);
+  border: 1px solid rgba(26, 115, 232, 0.2);
 }
 .pulse-dot {
   width: 8px;
@@ -800,10 +791,10 @@ onBeforeUnmount(() => {
   transform: translateY(-1px);
 }
 .filter-pill.active {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, var(--primary), #4a9af5);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.28);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.28);
 }
 
 /* ===== 结果区 ===== */
@@ -1000,7 +991,7 @@ onBeforeUnmount(() => {
 /* ===== Toast ===== */
 .toast {
   position: fixed;
-  top: 80px;
+  top: 24px;
   right: 24px;
   padding: 12px 20px;
   border-radius: var(--radius-md);
@@ -1037,12 +1028,18 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  .hero-logo {
-    width: 40px;
-    height: 40px;
+  .hero--home {
+    padding-top: min(14vh, 96px);
   }
-  .hero-brand {
-    font-size: 24px;
+  .hero--home .hero-logo {
+    width: 64px;
+    height: 64px;
+  }
+  .hero--home .hero-brand {
+    font-size: 28px;
+  }
+  .hero--compact .hero-brand {
+    font-size: 20px;
   }
   .hero-tagline__platforms {
     display: none;

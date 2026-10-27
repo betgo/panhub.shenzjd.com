@@ -13,28 +13,28 @@
 .dark {
   /* 深色 class 兜底：即使 @media 未命中（如手动强制），也声明为深色 */
   color-scheme: dark;
-  --primary: #2dd4bf;
-  --primary-dark: #14b8a6;
-  --secondary: #fbbf24;
+  --primary: #8ab4f8;
+  --primary-dark: #1A73E8;
+  --secondary: #4a9af5;
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
   --bg-glass: rgba(13, 17, 23, 0.82);
-  --bg-body: radial-gradient(ellipse at 10% 0%, rgba(13, 148, 136, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 5%, rgba(217, 119, 6, 0.08) 0%, transparent 40%),
+  --bg-body: radial-gradient(ellipse at 10% 0%, rgba(26, 115, 232, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 5%, rgba(124, 58, 237, 0.08) 0%, transparent 40%),
     #0a0e14;
   --bg-glass-strong: rgba(13, 17, 23, 0.96);
   --bg-surface: rgba(22, 27, 34, 0.7);
   --bg-surface-elevated: rgba(22, 27, 34, 0.5);
   --bg-surface-subtle: rgba(22, 27, 34, 0.4);
   --bg-input: rgba(22, 27, 34, 0.6);
-  --bg-hover: rgba(13, 148, 136, 0.06);
-  --bg-active: rgba(13, 148, 136, 0.12);
+  --bg-hover: rgba(26, 115, 232, 0.08);
+  --bg-active: rgba(26, 115, 232, 0.16);
   --bg-skeleton: #161b22;
   --bg-skeleton-shine: rgba(255, 255, 255, 0.04);
   --text-primary: #e6edf3;
   --text-secondary: #a1aab5;
   --text-tertiary: #7d8794;
-  --text-on-primary: #042f2e;
+  --text-on-primary: #0b1220;
   --text-on-warning: #451a03;
   --text-on-success: #022c22;
   --text-on-danger: #450a0a;
@@ -47,25 +47,25 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-  --primary-glow: rgba(13, 148, 136, 0.35);
+  --primary-glow: rgba(26, 115, 232, 0.4);
   --warning-glow: rgba(217, 119, 6, 0.35);
   --success-glow: rgba(5, 150, 105, 0.35);
   --danger-glow: rgba(220, 38, 38, 0.35);
-  --accent-glow: rgba(251, 191, 36, 0.35);
+  --accent-glow: rgba(74, 154, 245, 0.35);
 }
 
 .dark body {
   background:
-    radial-gradient(ellipse at 10% 0%, rgba(13, 148, 136, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 5%, rgba(217, 119, 6, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 10% 0%, rgba(26, 115, 232, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 5%, rgba(124, 58, 237, 0.08) 0%, transparent 40%),
     #0a0e14;
 }
 
 .dark .blob { opacity: 0.12; }
 /* 暗色光斑与 app.vue 同步改径向渐变：去 filter blur，动画零重绘（2026-09-04） */
-.dark .blob-1 { background: radial-gradient(circle at 40% 40%, #2dd4bf 0%, #0d9488 45%, transparent 72%); }
-.dark .blob-2 { background: radial-gradient(circle at 40% 40%, #fbbf24 0%, #d97706 45%, transparent 72%); }
-.dark .blob-3 { background: radial-gradient(circle at 40% 40%, #2dd4bf 0%, #0891b2 45%, transparent 72%); }
+.dark .blob-1 { background: radial-gradient(circle at 40% 40%, #8ab4f8 0%, #1A73E8 45%, transparent 72%); }
+.dark .blob-2 { background: radial-gradient(circle at 40% 40%, #a78bfa 0%, #7C3AED 45%, transparent 72%); }
+.dark .blob-3 { background: radial-gradient(circle at 40% 40%, #8ab4f8 0%, #4a9af5 45%, transparent 72%); }
 
 .dark .header {
   background: rgba(13, 17, 23, 0.78);
@@ -74,7 +74,7 @@
 }
 
 .dark .brand-text {
-  background: linear-gradient(135deg, #2dd4bf, #fbbf24);
+  background: linear-gradient(135deg, #8ab4f8, #4a9af5);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -123,7 +123,7 @@
 .dark [data-theme-part="search-box"] .search-input { color: var(--text-primary); }
 .dark [data-theme-part="search-box"] .search-input::placeholder { color: var(--text-tertiary); }
 .dark [data-theme-part="search-box"] .action-btn.primary {
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  background: linear-gradient(135deg, #1A73E8, #4a9af5);
   color: var(--text-on-primary);
   box-shadow: 0 4px 12px var(--primary-glow);
 }
@@ -226,7 +226,7 @@
   border-top-color: var(--border-light);
 }
 .dark [data-theme-part="result-card"] .load-more-btn {
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  background: linear-gradient(135deg, #1A73E8, #4a9af5);
   color: var(--text-on-primary);
   box-shadow: 0 4px 12px var(--primary-glow);
 }
@@ -385,7 +385,7 @@
   border-color: rgba(45, 212, 191, 0.2);
 }
 .dark .hero-title-line--accent {
-  background: linear-gradient(120deg, #2dd4bf 0%, #14b8a6 40%, #fbbf24 100%);
+  background: linear-gradient(120deg, #8ab4f8 0%, #1A73E8 40%, #7C3AED 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -431,7 +431,7 @@
   color: var(--text-primary);
 }
 .dark .filter-pill.active {
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  background: linear-gradient(135deg, #1A73E8, #4a9af5);
   color: var(--text-on-primary);
   box-shadow: 0 4px 12px var(--primary-glow);
 }
