@@ -40,17 +40,27 @@ export const MAX_RESULTS_PER_ROUND = 90;
 
 
 /**
- * 二次转存后端（你的账号转存再分享）
+ * 二次转存后端（urldb reshare，经可藏密钥的 HTTPS 代理）
  *
- * 优先级：构建时 VITE_RESHARE_API_BASE → 运行时 localStorage.RESHARE_API_BASE → 默认 Vercel 正式地址
- * GitHub Pages 是 https，必须填 https 公网地址，不能用 http://127.0.0.1（会被混合内容拦截）。
- * 本地用 http 预览时可在控制台：localStorage.setItem("RESHARE_API_BASE","http://127.0.0.1:8787")
+ * 优先级：构建时 VITE_RESHARE_API_BASE → 运行时 localStorage.RESHARE_API_BASE → 默认代理地址
+ * GitHub Pages 是 https：必须填 https 公网代理，禁止把 ADMIN_TOKEN 写进前端，
+ * 也禁止直连 http://49.234.16.138:3030（混合内容会被浏览器拦）。
+ *
+ * 本地：
+ *   URLDB_TOKEN=... PORT=8788 node scripts/urldb-reshare-proxy.mjs
+ *   localStorage.setItem("RESHARE_API_BASE","http://127.0.0.1:8788")
+ *
+ * 文档：docs/urldb-reshare.md
  */
-/** 正式二次转存 API（Vercel production） */
-const DEFAULT_RESHARE_API_BASE = "https://panhub-reshare.vercel.app";
+/** 正式二次转存代理：Hermes 本机注入令牌 + Cloudflare quick tunnel（无 Vercel） */
+const DEFAULT_RESHARE_API_BASE = "https://creator-howto-raises-monday.trycloudflare.com";
 
 function readReshareBase(): string {
   const fromEnv = String(import.meta.env.VITE_RESHARE_API_BASE || "").trim().replace(/\/$/, "");
+  // same-origin: 前后端同域部署时跟当前页面协议/主机走（http:80 或 https:8088 均可）
+  if (fromEnv === "same-origin" || fromEnv === ".") {
+    if (typeof window !== "undefined" && window.location?.origin) return window.location.origin;
+  }
   if (fromEnv) return fromEnv;
   if (typeof localStorage !== "undefined") {
     const fromLs = String(localStorage.getItem("RESHARE_API_BASE") || "").trim().replace(/\/$/, "");
