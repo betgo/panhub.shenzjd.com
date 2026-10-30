@@ -1,0 +1,35 @@
+# Hermes / urldb nginx：对浏览器公开的 reshare 入口，服务端注入令牌。
+# 把 TOKEN 换成 /home/ubuntu/apps/urldb/.credentials 中的值（或用 envsubst）。
+# 注意：若对外仍是 http://，GitHub Pages(https) 无法直连——需 TLS 或外层 HTTPS 代理。
+
+location = /api/v1/reshare {
+    if ($request_method = OPTIONS) {
+        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-API-Token";
+        return 204;
+    }
+    proxy_pass http://backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-API-Token "REPLACE_WITH_URLDB_TOKEN";
+    add_header Access-Control-Allow-Origin * always;
+}
+
+location ~ ^/api/v1/reshare/[^/]+$ {
+    if ($request_method = OPTIONS) {
+        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-API-Token";
+        return 204;
+    }
+    proxy_pass http://backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-API-Token "REPLACE_WITH_URLDB_TOKEN";
+    add_header Access-Control-Allow-Origin * always;
+}
