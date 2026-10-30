@@ -52,8 +52,8 @@ export const MAX_RESULTS_PER_ROUND = 90;
  *
  * 文档：docs/urldb-reshare.md
  */
-/** 正式二次转存代理（Vercel；需配置 URLDB_UPSTREAM + URLDB_TOKEN 转发到腾讯云 urldb） */
-const DEFAULT_RESHARE_API_BASE = "https://panhub-reshare.vercel.app";
+/** 正式二次转存代理：Hermes 本机注入令牌 + Cloudflare quick tunnel（无 Vercel） */
+const DEFAULT_RESHARE_API_BASE = "https://creator-howto-raises-monday.trycloudflare.com";
 
 function readReshareBase(): string {
   const fromEnv = String(import.meta.env.VITE_RESHARE_API_BASE || "").trim().replace(/\/$/, "");

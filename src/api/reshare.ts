@@ -5,7 +5,7 @@
  * GET  /api/v1/reshare/:id → { success, data: { status, share_url?, passcode?, error? } }
  *
  * 鉴权令牌绝不能进前端：RESHARE_API_BASE 必须指向「藏密钥的代理」
- *（Vercel panhub-reshare URLDB 模式 / Hermes nginx / scripts/urldb-reshare-proxy.mjs）。
+ *（Hermes Cloudflare tunnel / 本机 scripts/urldb-reshare-proxy.mjs；Vercel 仅可选备选）。
  */
 import {
   RESHARE_API_BASE,
