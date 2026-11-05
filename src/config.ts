@@ -76,12 +76,12 @@ export const USE_RESHARE = Boolean(RESHARE_API_BASE);
 
 /**
  * 二次转存兜底目标盘：链接盘型未知时用迅雷；
- * 已知盘型（百度 / 夸克 / 迅雷）一律同盘转存，见 resolveReshareTargetDriver。
+ * 已知盘型（百度 / 夸克 / 迅雷 / UC）一律同盘转存，见 resolveReshareTargetDriver。
  */
 export const RESHARE_TARGET_DRIVER = "xunlei";
 
 /** 已接入二次转存的源盘（同盘进同盘） */
-export const RESHAREABLE_DRIVERS = ["xunlei", "baidu", "quark"] as const;
+export const RESHAREABLE_DRIVERS = ["xunlei", "baidu", "quark", "uc"] as const;
 export type ReshareableDriver = (typeof RESHAREABLE_DRIVERS)[number];
 
 export function isReshareableDriver(id: string | null | undefined): id is ReshareableDriver {
@@ -90,7 +90,7 @@ export function isReshareableDriver(id: string | null | undefined): id is Reshar
 
 /**
  * 按源链接域名决定 target_driver：
- * pan.baidu.com → baidu，pan.quark.cn → quark，pan.xunlei.com → xunlei；
+ * pan.baidu.com → baidu，pan.quark.cn → quark，pan.xunlei.com → xunlei，drive.uc.cn → uc；
  * 识别不出时返回兜底盘（迅雷）。传 null/空且只要「是否可转存」时请配合 isReshareableDriver(driverOf(url))。
  */
 export function resolveReshareTargetDriver(
@@ -100,5 +100,6 @@ export function resolveReshareTargetDriver(
   if (raw.includes("pan.baidu.com") || raw === "baidu") return "baidu";
   if (raw.includes("pan.quark.cn") || raw === "quark") return "quark";
   if (raw.includes("pan.xunlei.com") || raw === "xunlei") return "xunlei";
+  if (raw.includes("drive.uc.cn") || raw === "uc") return "uc";
   return RESHARE_TARGET_DRIVER;
 }
