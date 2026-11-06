@@ -1,5 +1,11 @@
-User-Agent: *
+User-agent: *
+Allow: /
 Disallow: /api/
+Disallow: /admin/
+Disallow: /_nuxt/
 
-# 指定站点地图，帮助搜索引擎更快发现页面
-Sitemap: https://panhub.shenzjd.com/sitemap.xml
+# 本站 sitemap（勿再指向 panhub.shenzjd.com）
+# Hermes 公网 IP
+Sitemap: http://49.234.16.138/sitemap.xml
+# GitHub Pages
+Sitemap: https://betgo.github.io/panhub.shenzjd.com/sitemap.xml
