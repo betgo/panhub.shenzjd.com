@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * 本地/运维用薄代理：浏览器 → 本服务(HTTPS或HTTP) → urldb
+ * 放行：/api/v1/reshare* 、POST /api/search-stats[/record]
  * 密钥只读环境变量，不进前端仓库。
  *
  *   URLDB_UPSTREAM=http://127.0.0.1:3030 \
@@ -31,9 +32,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const path = req.url || '/';
-  if (!path.startsWith('/api/v1/reshare')) {
+  const pathOnly = path.split('?')[0];
+  const allowed =
+    pathOnly.startsWith('/api/v1/reshare') ||
+    pathOnly === '/api/search-stats/record' ||
+    pathOnly === '/api/search-stats';
+  if (!allowed) {
     res.writeHead(404, { ...cors, 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: false, message: 'only /api/v1/reshare*' }));
+    res.end(JSON.stringify({ success: false, message: 'only /api/v1/reshare* or /api/search-stats[/record]' }));
     return;
   }
   const chunks = [];

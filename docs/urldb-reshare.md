@@ -100,3 +100,12 @@ curl -s "$BASE/api/v1/reshare/<task_id>"
 3. 代理从 `.credentials` 注入令牌（与 urldb 一致）
 4. Pages 合并后构建产物含新 `DEFAULT_RESHARE_API_BASE`（或显式 `VITE_RESHARE_API_BASE`）
 5. （可选）自动清理已在 urldb 开启；named tunnel 可避免 quick tunnel URL 漂移
+
+## 搜索统计上报（星盘搜 → urldb）
+
+前端每次 `performSearch` 会 `POST /api/search-stats/record`（`{ keyword, source:"web" }`）。
+
+- Hermes 同源：Caddy 将 `POST /api/search-stats/record` 转到本机 `urldb-reshare-proxy`（注入 `X-API-Token`），再进 urldb。
+- GitHub Pages：走与 reshare 相同的 Cloudflare tunnel 基址（代理已放行该路径）。
+- 令牌不进前端仓库。
+
