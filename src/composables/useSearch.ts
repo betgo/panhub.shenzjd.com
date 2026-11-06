@@ -15,6 +15,7 @@ import { computed, ref } from "vue";
 import { MAX_RESULTS_PER_ROUND } from "../config";
 import { apiUrl, authHeaders } from "../api/client";
 import { getAnonTicketSafe } from "../api/auth";
+import { recordSearchStat } from "../api/searchStats";
 import type { MergedLinks } from "../types";
 import { countMerged, mergeMergedByType } from "../utils/merge";
 
@@ -254,6 +255,9 @@ export function useSearch() {
       document.activeElement.blur();
       await new Promise((r) => setTimeout(r, 100));
     }
+
+    // 上报 urldb 搜索统计（异步，不影响主流程）
+    recordSearchStat(keyword, "web");
 
     state.value.loading = true;
     state.value.error = "";
