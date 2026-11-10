@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
+    <script>
+      // 相对资源在 /daily 刷新后仍要落到站点根（Hermes=/ ，Pages=/panhub.shenzjd.com/）
+      (function () {
+        var path = location.pathname;
+        var sub = "/panhub.shenzjd.com";
+        var href = path === sub || path.indexOf(sub + "/") === 0 ? sub + "/" : "/";
+        var el = document.createElement("base");
+        el.href = href;
+        document.head.insertBefore(el, document.head.firstChild);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
