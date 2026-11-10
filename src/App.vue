@@ -34,18 +34,20 @@
            下面一句描述，无卡片、无渐变底。搜索站的首屏只需要回答"这是谁、干什么"，
            剩下的交给下面的搜索框 -->
       <!-- 首页：搜引擎极简大白底（logo + 星盘搜 + 搜索）；搜后收成紧凑品牌行 -->
-      <header class="hero" :class="{ 'hero--home': !searched, 'hero--compact': searched }">
-        <div class="hero-lockup" :class="{ 'hero-lockup--stack': !searched }">
-          <img
-            class="hero-logo"
-            :src="LOGO_URL"
-            alt=""
-            :width="searched ? 40 : 72"
-            :height="searched ? 40 : 72"
-            aria-hidden="true" />
-          <h1 class="hero-brand">星盘搜</h1>
-        </div>
-        <p v-if="!searched" class="hero-tag">聚合网盘资源搜索 · 不存储任何文件</p>
+      <header class="hero" :class="{ 'hero--home': !searched && !isDailyRoute, 'hero--compact': searched || isDailyRoute }">
+        <a class="hero-home-link" :href="homeHref" @click.prevent="goHome">
+          <div class="hero-lockup" :class="{ 'hero-lockup--stack': !searched && !isDailyRoute }">
+            <img
+              class="hero-logo"
+              :src="LOGO_URL"
+              alt=""
+              :width="searched || isDailyRoute ? 40 : 72"
+              :height="searched || isDailyRoute ? 40 : 72"
+              aria-hidden="true" />
+            <h1 class="hero-brand">星盘搜</h1>
+          </div>
+        </a>
+        <p v-if="!searched && !isDailyRoute" class="hero-tag">聚合网盘资源搜索 · 不存储任何文件</p>
         <!-- 注意 span 之间不能换行：Vue 会吃掉元素之间仅含空白的换行文本节点，
              分隔符会跟前后文字黏在一起；间距一律由 .hero-tagline__sep 的 margin 给 -->
         <p v-else class="hero-tagline"><span>10000000+ 网盘资源免费无偿分享</span><span class="hero-tagline__sep" aria-hidden="true">·</span><span class="hero-tagline__platforms">聚合夸克、百度、迅雷、UC、移动等网盘，</span><span>坚持做最全的网盘搜索引擎</span></p>
@@ -180,15 +182,22 @@
            组件挂载时拉一次 -->
       <!-- v-show 而非 v-if：v-if 搜索时会销毁组件，重置回首页后重新挂载
            （多拉一次词表、入场动画重放）；v-show 保留组件与已取到的词表 -->
-      <section v-show="!searched" class="hot-keyword-wrap">
+      <section v-show="!searched && !isDailyRoute" class="hot-keyword-wrap">
         <HotKeywordSection :on-search="quickSearch" />
+      </section>
+
+      <!-- 今日更新 / 网友转存（对接官网线上接口，热词与精选之间） -->
+      <section v-show="!searched && !isDailyRoute" class="daily-update-wrap">
+        <DailyUpdateSection />
       </section>
 
       <!-- 网盘资源精选（对齐官方站 2026-09-22）：官方站后台维护的固定资源，
            点开直接跳分享页由用户自己保存（不转存）。搜索时隐藏 -->
-      <section v-show="!searched" class="curated-wrap">
+      <section v-show="!searched && !isDailyRoute" class="curated-wrap">
         <CuratedResourceSection />
       </section>
+
+      <DailyPage v-if="isDailyRoute && !searched" :initial-tab="dailyInitialTab" />
 
     </main>
 
@@ -216,8 +225,11 @@ import TransferStatusDialog from "./components/TransferStatusDialog.vue";
 import { useTransfer } from "./composables/useTransfer";
 import HotKeywordSection from "./components/HotKeywordSection.vue";
 import CuratedResourceSection from "./components/CuratedResourceSection.vue";
+import DailyUpdateSection from "./components/DailyUpdateSection.vue";
+import DailyPage from "./components/DailyPage.vue";
 import NoticeModal from "./components/NoticeModal.vue";
 import { API_BASE } from "./config";
+import { buildAppHref, getAppRoute, navigateApp } from "./utils/appRoute";
 import { useSearch } from "./composables/useSearch";
 import { useAnnouncement } from "./composables/useAnnouncement";
 import { useToast } from "./composables/useToast";
@@ -233,6 +245,22 @@ const kw = ref("");
 const searchCat = ref("");
 const filterPlatform = ref("all");
 const expandedSet = ref<Set<string>>(new Set());
+
+const routePath = ref(typeof window !== "undefined" ? getAppRoute() : "/");
+const isDailyRoute = computed(() => routePath.value === "/daily");
+const dailyInitialTab = ref<"auto" | "community">("auto");
+const homeHref = computed(() => buildAppHref("/"));
+
+function readDailyTab(): "auto" | "community" {
+  return new URLSearchParams(window.location.search).get("tab") === "community"
+    ? "community"
+    : "auto";
+}
+
+function syncRouteFromLocation() {
+  routePath.value = getAppRoute();
+  dailyInitialTab.value = readDailyTab();
+}
 
 const {
   loading,
@@ -350,13 +378,14 @@ async function doSearch() {
   });
 }
 
-/** 搜索词与类别同步到 URL（可分享，刷新后自动重搜） */
+/** 搜索词与类别同步到 URL（可分享，刷新后自动重搜）。搜索时回到站点根路径，避免停在 /daily。 */
 function syncUrl(keyword: string) {
-  const url = new URL(window.location.href);
-  url.searchParams.set("q", keyword);
-  if (searchCat.value) url.searchParams.set("cat", searchCat.value);
-  else url.searchParams.delete("cat");
-  window.history.replaceState(null, "", url.toString());
+  navigateApp(
+    "/",
+    { q: keyword, cat: searchCat.value || undefined },
+    { replace: true },
+  );
+  routePath.value = "/";
 }
 
 async function onSearch() {
@@ -389,9 +418,19 @@ function fullReset() {
   filterPlatform.value = "all";
   expandedSet.value = new Set();
   resetSearch();
-  const url = new URL(window.location.href);
-  url.search = "";
-  window.history.replaceState(null, "", url.toString());
+  navigateApp("/", {}, { replace: true });
+  routePath.value = "/";
+}
+
+function goHome() {
+  if (searched.value) {
+    fullReset();
+    return;
+  }
+  if (isDailyRoute.value) {
+    navigateApp("/", {}, { replace: true });
+    syncRouteFromLocation();
+  }
 }
 
 // ===== 结果展示 =====
@@ -442,6 +481,8 @@ onMounted(async () => {
   void ensureHotKeywords();
   // 窗口尺寸变化时重新判定公告是否需要滚动
   window.addEventListener("resize", onResize);
+  window.addEventListener("popstate", syncRouteFromLocation);
+  syncRouteFromLocation();
 
   loadAnnouncement().then(async () => {
     if (announcementItems.value.length > 1) {
@@ -462,6 +503,10 @@ onMounted(async () => {
   if (cat) searchCat.value = cat;
   if (q) {
     kw.value = q;
+    if (getAppRoute() === "/daily") {
+      navigateApp("/", { q, cat: cat || undefined }, { replace: true });
+      routePath.value = "/";
+    }
     await onSearch();
   }
 });
@@ -469,6 +514,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (rotateTimer) clearInterval(rotateTimer);
   window.removeEventListener("resize", onResize);
+  window.removeEventListener("popstate", syncRouteFromLocation);
 });
 </script>
 
@@ -616,6 +662,10 @@ onBeforeUnmount(() => {
 }
 
 /* ===== 品牌区：首页搜引擎极简（大标居中）；结果页紧凑品牌行 ===== */
+.hero-home-link {
+  color: inherit;
+  text-decoration: none;
+}
 .hero {
   display: flex;
   flex-direction: column;
